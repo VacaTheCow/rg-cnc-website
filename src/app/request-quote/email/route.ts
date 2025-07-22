@@ -1,3 +1,4 @@
+// app/request-quote/email/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
@@ -12,15 +13,18 @@ export async function POST(req: NextRequest) {
   const message = formData.get("message") as string;
   const files = formData.getAll("files") as File[];
 
-  const attachments = [];
-
-  for (const file of files) {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    attachments.push({
-      filename: file.name,
-      content: buffer.toString("base64"),
-    });
-  }
+  const attachments =
+    files?.length > 0
+      ? await Promise.all(
+          files.map(async (file) => {
+            const buffer = Buffer.from(await file.arrayBuffer());
+            return {
+              filename: file.name,
+              content: buffer.toString("base64"),
+            };
+          })
+        )
+      : [];
 
   await resend.emails.send({
     from: "no-reply@rgprecisemachining.com",
@@ -33,7 +37,11 @@ export async function POST(req: NextRequest) {
       <p><strong>Company:</strong> ${company}</p>
       <p><strong>Industry:</strong> ${industry}</p>
       <p><strong>Message:</strong><br/>${message}</p>
-      ${attachments.length > 0 ? `<p><strong>Attachments:</strong> ${attachments.length} file(s) included</p>` : ""}
+      ${
+        attachments.length > 0
+          ? `<p><strong>Attachments:</strong> ${attachments.length} file(s) included</p>`
+          : ""
+      }
     `,
     attachments,
   });

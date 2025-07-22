@@ -29,15 +29,10 @@ export async function POST(req: NextRequest) {
 
   for (const file of files) {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const savedFileName = `${Date.now()}-${file.name}`;
-    const filePath = path.join(UPLOADS_DIR, savedFileName);
-
-    await writeFile(filePath, buffer);
-    savedFiles.push(savedFileName);
-
+  
     attachments.push({
       filename: file.name,
-      content: buffer.toString("base64"),
+      content: buffer.toString("base64"), // base64 encode for Resend
     });
   }
 
